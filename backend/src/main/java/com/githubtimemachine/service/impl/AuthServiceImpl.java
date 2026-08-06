@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
     public String getGitHubAuthorizationUrl() {
         return "https://github.com/login/oauth/authorize" +
                 "?client_id=" + clientId +
-                "&scope=read:user,user:email";clientId
+                "&scope=read:user,user:email";
     }
 
     @Override

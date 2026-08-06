@@ -203,7 +203,12 @@
     },
 
     updateAuthUI(user) {
-      if (!user) return;
+      if (!user) {
+        if (this.elements.btnAdminDashboard) {
+          this.elements.btnAdminDashboard.classList.add('hidden');
+        }
+        return;
+      }
       if (this.elements.userProfileBadge) {
         this.elements.userProfileBadge.classList.remove('hidden');
       }
@@ -216,8 +221,12 @@
       if (this.elements.headerUserName) {
         this.elements.headerUserName.textContent = user.displayName || `@${user.username}`;
       }
-      if (user.role === 'ROLE_ADMIN' && this.elements.btnAdminDashboard) {
-        this.elements.btnAdminDashboard.classList.remove('hidden');
+      if (this.elements.btnAdminDashboard) {
+        if (user.role === 'ROLE_ADMIN') {
+          this.elements.btnAdminDashboard.classList.remove('hidden');
+        } else {
+          this.elements.btnAdminDashboard.classList.add('hidden');
+        }
       }
     },
 
