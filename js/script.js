@@ -195,10 +195,15 @@
             const user = await window.ApiService.getCurrentUser();
             if (user && user.username) {
               this.updateAuthUI(user);
+            } else {
+              this.updateAuthUI(null);
             }
           } catch (err) {
             console.warn('[Auth Check Error] Session expired or offline');
+            this.updateAuthUI(null);
           }
+        } else {
+          this.updateAuthUI(null);
         }
       }
     },

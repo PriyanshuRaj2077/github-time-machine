@@ -133,6 +133,10 @@ a:hover {
   transition: opacity var(--transition-slow);
 }
 
+.hidden {
+  display: none !important;
+}
+
 .view-section.hidden {
   display: none !important;
   opacity: 0;
