@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Time Machine — Travel Through Your Code History</title>
+  <meta name="description" content="A cinematic web experience where developers replay and analyze their GitHub journey.">
+  
+  <!-- Fonts: JetBrains Mono (Headings & Terminal) + Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Main Design System Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app" role="main">
+    
+    <!-- ========================================== -->
+    <!-- SECTION 1: HOME EXPERIENCE                 -->
+    <!-- ========================================== -->
+    <section id="home-screen" class="view-section active" aria-label="Home Screen">
+      
+      <!-- Black Screen Typewriter Intro Overlay -->
+      <div id="intro-overlay" class="intro-overlay" role="button" aria-label="Click to skip intro">
+        <div class="intro-content">
+          <span id="intro-text" class="intro-text" aria-live="polite"></span>
+          <span class="terminal-cursor blink" aria-hidden="true">_</span>
+        </div>
+      </div>
+
+      <!-- Main Terminal Interface (Revealed after Intro) -->
+      <div id="terminal-wrapper" class="terminal-wrapper hidden">
+        <div class="terminal-window" role="region" aria-label="Terminal Prompt Interface">
+          
+          <!-- Terminal Header Bar -->
+          <div class="terminal-header">
+            <div class="terminal-title">
+              <span class="terminal-title-icon" aria-hidden="true">❯_</span> github-time-machine v1.0.0
+            </div>
+            <div class="terminal-status">
+              <span class="status-indicator" aria-hidden="true"></span> SESSION: ANONYMOUS
+            </div>
+          </div>
+
+          <!-- Terminal Body Content -->
+          <div class="terminal-body">
+            
+            <!-- Welcome Header ASCII / Banner -->
+            <div class="terminal-banner">
+              <pre class="ascii-art" aria-label="GitHub Time Machine ASCII Art">
+   GITHUB TIME MACHINE
+   [System Ready // Epoch Trace Initialized]
+              </pre>
+              <p class="terminal-subtitle">Replay, analyze, and relive your journey across commit history.</p>
+            </div>
+
+            <!-- Mode Selection / Instructions -->
+            <div class="terminal-modes" role="radiogroup" aria-label="Analysis Mode Options">
+              <div class="mode-item active" data-mode="public" role="radio" aria-checked="true" tabindex="0">
+                <span class="mode-num">[1]</span>
+                <span class="mode-label">Analyze Public GitHub Profile</span>
+                <span class="mode-badge">No auth required</span>
+              </div>
+              <div class="mode-item" data-mode="auth" role="radio" aria-checked="false" tabindex="0">
+                <span class="mode-num">[2]</span>
+                <span class="mode-label">Continue with GitHub</span>
+                <span class="mode-badge secondary">OAuth optional</span>
+              </div>
+            </div>
+
+            <!-- Terminal Command Prompt Input -->
+            <form id="terminal-form" class="terminal-form" autocomplete="off">
+              <div class="prompt-line">
+                <span class="prompt-user">dev@time-machine</span>:<span class="prompt-path">~</span><span class="prompt-symbol">$</span>
+                <div class="input-container">
+                  <input 
+                    type="text" 
+                    id="username-input" 
+                    class="terminal-input" 
+                    placeholder="enter username or repo URL (e.g. torvalds or facebook/react)" 
+                    spellcheck="false"
+                    autofocus
+                    aria-label="GitHub username or repository URL input"
+                  />
+                </div>
+              </div>
+              
+              <div class="terminal-actions">
+                <button type="submit" id="btn-submit" class="terminal-btn primary" aria-label="Execute time travel query">
+                  <span class="btn-icon" aria-hidden="true">⚡</span> EXECUTE TIME TRAVEL
+                </button>
+                <button type="button" id="btn-github-oauth" class="terminal-btn secondary" aria-label="Login with GitHub">
+                  <span class="btn-icon" aria-hidden="true">🔐</span> LOGIN WITH GITHUB
+                </button>
+              </div>
+            </form>
+
+            <!-- Quick Suggestions / Examples -->
+            <div class="terminal-footer">
+              <span class="footer-label">Quick Suggestions:</span>
+              <button type="button" class="quick-tag" data-val="torvalds" aria-label="Analyze torvalds profile">torvalds</button>
+              <button type="button" class="quick-tag" data-val="gaearon" aria-label="Analyze gaearon profile">gaearon</button>
+              <button type="button" class="quick-tag" data-val="https://github.com/facebook/react" aria-label="Analyze react repository">facebook/react</button>
+            </div>
+
+          </div><!-- /.terminal-body -->
+
+        </div><!-- /.terminal-window -->
+      </div><!-- /.terminal-wrapper -->
+
+    </section><!-- /#home-screen -->
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: LOADING EXPERIENCE             -->
+    <!-- ========================================== -->
+    <section id="loading-screen" class="view-section hidden" aria-label="Loading Experience">
+      <div class="loading-wrapper">
+        <div class="loading-window" role="status" aria-live="polite">
+          <div class="loading-header">
+            <span class="terminal-title-icon" aria-hidden="true">⚙</span> QUERYING TIME MATRIX // <span id="loading-target-name">@developer</span>
+          </div>
+          <div id="loading-log" class="loading-log">
+            <!-- Dynamic terminal progress lines inserted here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 3A: FIRST SCREEN AFTER ANALYSIS   -->
+    <!-- ========================================== -->
+    <section id="replay-intro-screen" class="view-section hidden" aria-label="Analysis Ready Screen">
+      <div class="replay-intro-container">
+        <div class="replay-intro-box">
+          <span class="intro-greeting-sub">SYSTEM ANALYSIS COMPLETE</span>
+          <h1 id="user-greeting-title" class="user-greeting-title">Hello developer</h1>
+          
+          <div class="time-stats-card">
+            <p class="stats-label">You've been coding for</p>
+            <div class="time-stats-grid">
+              <div class="time-stat-item">
+                <span id="stat-years" class="stat-value">0</span>
+                <span class="stat-unit">Years</span>
+              </div>
+              <div class="time-stat-item">
+                <span id="stat-months" class="stat-value">0</span>
+                <span class="stat-unit">Months</span>
+              </div>
+              <div class="time-stat-item">
+                <span id="stat-days" class="stat-value">0</span>
+                <span class="stat-unit">Days</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="replay-prompt-box">
+            <button type="button" id="btn-start-replay" class="terminal-btn primary large" aria-label="Start documentary replay">
+              <span>Press Enter or Click to Replay Your Journey</span>
+            </button>
+            <span class="prompt-subtext">DOCUMENTARY EXPERIENCE READY</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 3B: REPLAY EXPERIENCE (Documentary)-->
+    <!-- ========================================== -->
+    <section id="replay-screen" class="view-section hidden" aria-label="Documentary Replay">
+      <div class="replay-viewport">
+        
+        <!-- Top Replay Bar -->
+        <div class="replay-hud">
+          <span class="hud-brand">GITHUB TIME MACHINE // DOCUMENTARY MODE</span>
+          <span id="replay-progress-text" class="hud-counter" aria-live="polite">EVENT 1 / 5</span>
+          <button type="button" id="btn-skip-replay" class="hud-skip" aria-label="Skip to dashboard view">SKIP TO DASHBOARD →</button>
+        </div>
+
+        <!-- Fullscreen Documentary Stage -->
+        <div id="replay-stage" class="replay-stage">
+          <div id="replay-card" class="replay-card" aria-live="polite">
+            <div id="replay-date" class="replay-date">January 2024</div>
+            <div id="replay-text" class="replay-text">Created first repository.</div>
+          </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="replay-footer-nav">
+          <button type="button" id="btn-replay-prev" class="nav-arrow disabled" aria-label="Previous slide">← PREV</button>
+          <div id="replay-dots" class="replay-dots" role="tablist" aria-label="Replay timeline progress"></div>
+          <button type="button" id="btn-replay-next" class="nav-arrow" aria-label="Next slide">NEXT →</button>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 4: DASHBOARD                      -->
+    <!-- ========================================== -->
+    <section id="dashboard-screen" class="view-section hidden" aria-label="Developer Dashboard">
+      
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-brand">
+          <span class="accent-text" aria-hidden="true">❯_</span> GITHUB TIME MACHINE
+        </div>
+        <div class="header-user-info">
+          <span id="header-user-tag">@username</span>
+          <button type="button" id="btn-new-search" class="header-btn" aria-label="Start new search">NEW TIME TRAVEL</button>
+        </div>
+      </header>
+
+      <main class="dashboard-content">
+
+        <!-- 1. Developer Summary -->
+        <div class="dashboard-block" id="block-summary">
+          <div class="block-header">
+            <span class="block-num">[01]</span>
+            <h2 class="block-title">DEVELOPER SUMMARY</h2>
+          </div>
+
+          <div class="summary-cards">
+            <div class="summary-card">
+              <span class="card-label">TOTAL YEARS ACTIVE</span>
+              <span id="summary-years" class="card-value">0 YRS</span>
+              <span class="card-sub">Since first commit</span>
+            </div>
+            <div class="summary-card">
+              <span class="card-label">PUBLIC REPOSITORIES</span>
+              <span id="summary-repos" class="card-value">0</span>
+              <span class="card-sub">Codebases indexed</span>
+            </div>
+            <div class="summary-card">
+              <span class="card-label">TOTAL FOLLOWERS</span>
+              <span id="summary-followers" class="card-value">0</span>
+              <span class="card-sub">Developer network</span>
+            </div>
+            <div class="summary-card">
+              <span class="card-label">PRIMARY ARCHITECTURE</span>
+              <span id="summary-primary-lang" class="card-value">JavaScript</span>
+              <span class="card-sub">Dominant stack</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Timeline Reveal -->
+        <div class="dashboard-block reveal-block" id="block-timeline">
+          <div class="block-header">
+            <span class="block-num">[02]</span>
+            <h2 class="block-title">CHRONOLOGICAL MILESTONES</h2>
+          </div>
+
+          <div id="timeline-list" class="timeline-list">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 3. Repositories Grid -->
+        <div class="dashboard-block reveal-block" id="block-repositories">
+          <div class="block-header">
+            <span class="block-num">[03]</span>
+            <h2 class="block-title">REPOSITORIES & CODEBASES</h2>
+          </div>
+
+          <div id="repos-grid" class="repos-grid">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 4. AI Insights Section -->
+        <div class="dashboard-block reveal-block" id="block-insights">
+          <div class="block-header">
+            <span class="block-num">[04]</span>
+            <h2 class="block-title">SYSTEM & CODING INSIGHTS</h2>
+          </div>
+
+          <div class="insights-box">
+            <div class="insight-item">
+              <span class="insight-tag">COMMIT PATTERN</span>
+              <p id="insight-commit-pattern" class="insight-desc">High velocity weekend engineering bursts detected with heavy architectural refinement.</p>
+            </div>
+            <div class="insight-item">
+              <span class="insight-tag">EVOLUTION PHASES</span>
+              <p id="insight-evolution" class="insight-desc">Transitioned from script prototyping to modular systems engineering across JavaScript and TypeScript ecosystems.</p>
+            </div>
+            <div class="insight-item">
+              <span class="insight-tag">ARCHITECTURAL PREFERENCE</span>
+              <p id="insight-architecture" class="insight-desc">Prefers decoupling UI modules with strict component separation and zero legacy dependencies.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Button to GitHub Wrapped -->
+        <div class="dashboard-footer-action">
+          <button type="button" id="btn-view-wrapped" class="terminal-btn primary large" aria-label="View wrapped summary">
+            VIEW GITHUB WRAPPED SUMMARY →
+          </button>
+        </div>
+
+      </main>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 5: REPOSITORY ANALYSIS VIEW       -->
+    <!-- ========================================== -->
+    <section id="repo-screen" class="view-section hidden" aria-label="Repository Analysis">
+      <header class="app-header">
+        <div class="header-brand">
+          <span class="accent-text" aria-hidden="true">❯_</span> REPOSITORY ANALYSIS MATRIX
+        </div>
+        <button type="button" class="header-btn btn-back-home" aria-label="Return to terminal search">← BACK TO TERMINAL</button>
+      </header>
+
+      <main class="dashboard-content">
+        
+        <!-- Repo Banner -->
+        <div class="repo-banner-card">
+          <span class="repo-found-badge">REPOSITORY FOUND</span>
+          <h1 id="repo-full-name" class="repo-full-name">facebook/react</h1>
+          <p id="repo-description" class="repo-description">The library for web and native user interfaces.</p>
+
+          <div class="repo-meta-grid">
+            <div class="meta-cell">
+              <span class="meta-label">OWNER</span>
+              <span id="repo-owner" class="meta-val">facebook</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">STARS</span>
+              <span id="repo-stars" class="meta-val">224,150</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">FORKS</span>
+              <span id="repo-forks" class="meta-val">45,200</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">PRIMARY LANGUAGE</span>
+              <span id="repo-lang" class="meta-val">JavaScript</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">CODEBASE AGE</span>
+              <span id="repo-age" class="meta-val">11 Years</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progressive Reveal Deep Metrics -->
+        <div id="repo-deep-metrics" class="repo-deep-metrics">
+          
+          <div class="metric-block reveal-delay-1">
+            <div class="metric-header">ARCHITECTURE SCORE</div>
+            <div id="repo-arch-score" class="metric-big-score">96 / 100</div>
+            <p class="metric-sub">Highly decoupled Fiber reconciliation architecture with atomic update scheduler.</p>
+          </div>
+
+          <div class="metric-block reveal-delay-2">
+            <div class="metric-header">REPOSITORY HEALTH</div>
+            <div id="repo-health" class="metric-status-value">EXCELLENT (98%)</div>
+            <p class="metric-sub">Active automated CI workflow, strict code review, high documentation coverage.</p>
+          </div>
+
+          <div class="metric-block reveal-delay-3">
+            <div class="metric-header">CONTRIBUTION DIFFICULTY</div>
+            <div id="repo-difficulty" class="metric-status-value">MODERATE</div>
+            <p class="metric-sub">Requires understanding of concurrent mode, synthetic event dispatchers, and fiber trees.</p>
+          </div>
+
+          <div class="metric-block reveal-delay-4 full-width">
+            <div class="metric-header">AI SYSTEM SUMMARY</div>
+            <p id="repo-ai-summary" class="metric-ai-text">
+              This repository represents a foundational piece of modern web software architecture. Maintains exceptional velocity with thousands of open-source contributors and zero breaking changes without deprecation warnings.
+            </p>
+          </div>
+
+        </div><!-- /#repo-deep-metrics -->
+
+      </main>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 6: GITHUB WRAPPED                 -->
+    <!-- ========================================== -->
+    <section id="wrapped-screen" class="view-section hidden" aria-label="GitHub Wrapped Summary">
+      <div class="wrapped-container">
+        
+        <div class="wrapped-card">
+          <div class="wrapped-badge">GITHUB WRAPPED // EPOCH SUMMARY</div>
+          
+          <h1 id="wrapped-username" class="wrapped-user-title">@developer</h1>
+          <p class="wrapped-subtitle">Your coding legacy recorded in the time machine.</p>
+
+          <div class="wrapped-grid">
+            <div class="wrapped-stat">
+              <span class="w-label">YEARS ON GITHUB</span>
+              <span id="wrapped-years" class="w-val">4</span>
+            </div>
+            <div class="wrapped-stat">
+              <span class="w-label">REPOSITORIES CREATED</span>
+              <span id="wrapped-repos" class="w-val">32</span>
+            </div>
+            <div class="wrapped-stat">
+              <span class="w-label">DOMINANT LANGUAGE</span>
+              <span id="wrapped-lang" class="w-val">JavaScript</span>
+            </div>
+            <div class="wrapped-stat">
+              <span class="w-label">DEVELOPER ARCHETYPE</span>
+              <span id="wrapped-archetype" class="w-val">System Architect</span>
+            </div>
+          </div>
+
+          <div class="wrapped-quote-box">
+            <pre class="ascii-art small" aria-label="Developer Quote">
+  "The best code is no code. The second best is clean code."
+            </pre>
+            <p id="wrapped-narrative" class="wrapped-narrative">
+              You are still building, still refining, and pushing commits into the future.
+            </p>
+          </div>
+
+          <div class="wrapped-actions">
+            <button type="button" id="btn-wrapped-restart" class="terminal-btn primary" aria-label="Time travel again">
+              <span>↻ TIME TRAVEL AGAIN</span>
+            </button>
+            <button type="button" class="terminal-btn secondary btn-back-dashboard" aria-label="Return to dashboard">
+              <span>← RETURN TO DASHBOARD</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- JavaScript Modules -->
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>

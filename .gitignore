@@ -1,0 +1,27 @@
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Node (if used)
+node_modules/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
