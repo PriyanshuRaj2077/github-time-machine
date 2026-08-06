@@ -180,12 +180,16 @@
         try {
           if (window.ApiService) {
             const authRes = await window.ApiService.handleOAuthCallback(code);
-            if (authRes && authRes.user) {
-              this.updateAuthUI(authRes.user);
+            const user = authRes ? (authRes.user || (authRes.raw && authRes.raw.data && authRes.raw.data.user)) : null;
+            if (user && user.username) {
+              this.updateAuthUI(user);
+            } else {
+              this.updateAuthUI(null);
             }
           }
         } catch (err) {
           console.error('[OAuth Callback Error]', err);
+          this.updateAuthUI(null);
         }
       } else {
         // 2. Check cached user or fetch /api/auth/me

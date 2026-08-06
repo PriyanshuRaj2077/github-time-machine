@@ -131,17 +131,47 @@
         method: 'POST',
         body: { code }
       });
-      if (res && res.token) {
-        localStorage.setItem('gtm_auth_token', res.token);
-        if (res.user) {
-          localStorage.setItem('gtm_auth_user', JSON.stringify(res.user));
+
+      let token = null;
+      let user = null;
+
+      if (res) {
+        if (res.token) {
+          token = res.token;
+          user = res.user;
+        } else if (res.data && res.data.token) {
+          token = res.data.token;
+          user = res.data.user;
         }
       }
-      return res;
+
+      if (token) {
+        localStorage.setItem('gtm_auth_token', token);
+      }
+      if (user) {
+        localStorage.setItem('gtm_auth_user', JSON.stringify(user));
+      }
+
+      return { token, user, raw: res };
     },
 
     async getCurrentUser() {
-      return await this._request('/api/auth/me');
+      const cached = localStorage.getItem('gtm_auth_user');
+      let cachedUser = null;
+      if (cached) {
+        try { cachedUser = JSON.parse(cached); } catch (e) {}
+      }
+
+      try {
+        const res = await this._request('/api/auth/me');
+        const user = (res && res.username) ? res : (res && res.data ? res.data : cachedUser);
+        if (user) {
+          localStorage.setItem('gtm_auth_user', JSON.stringify(user));
+        }
+        return user;
+      } catch (err) {
+        return cachedUser;
+      }
     },
 
     async getUserHistory() {
