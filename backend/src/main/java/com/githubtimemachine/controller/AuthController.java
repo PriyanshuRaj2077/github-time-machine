@@ -6,6 +6,8 @@ import com.githubtimemachine.dto.response.ApiResponse;
 import com.githubtimemachine.security.UserPrincipal;
 import com.githubtimemachine.service.AuthService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     private final AuthService authService;
 
     public AuthController(AuthService authService) {
@@ -35,13 +39,17 @@ public class AuthController {
 
     @PostMapping("/github/callback")
     public ResponseEntity<ApiResponse<AuthResponseDto>> handleGitHubCallback(@Valid @RequestBody OAuthCodeRequestDto request) {
+        logger.info("[AuthController] Received POST OAuth callback with code length: {}", request.getCode() != null ? request.getCode().length() : 0);
         AuthResponseDto response = authService.processGitHubCallback(request.getCode());
+        logger.info("[AuthController] OAuth authentication successful for user: {}", response.getUser() != null ? response.getUser().getUsername() : "unknown");
         return ResponseEntity.ok(ApiResponse.success(response, "Authentication successful"));
     }
 
     @GetMapping("/github/callback")
     public ResponseEntity<ApiResponse<AuthResponseDto>> handleGitHubCallbackGet(@RequestParam("code") String code) {
+        logger.info("[AuthController] Received GET OAuth callback with code length: {}", code != null ? code.length() : 0);
         AuthResponseDto response = authService.processGitHubCallback(code);
+        logger.info("[AuthController] GET OAuth authentication successful for user: {}", response.getUser() != null ? response.getUser().getUsername() : "unknown");
         return ResponseEntity.ok(ApiResponse.success(response, "Authentication successful"));
     }
 

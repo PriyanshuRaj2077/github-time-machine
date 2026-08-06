@@ -127,10 +127,13 @@
     },
 
     async handleOAuthCallback(code) {
+      console.log('[ApiService] Initiating OAuth code exchange with backend. Code:', code ? code.substring(0, 8) + '...' : 'null');
       const response = await this._request('/api/auth/github/callback', {
         method: 'POST',
         body: { code }
       });
+
+      console.log('[ApiService] Backend OAuth exchange raw response:', response);
 
       let token = null;
       let user = null;
@@ -147,9 +150,16 @@
 
       if (token) {
         localStorage.setItem('gtm_auth_token', token);
+        console.log('[ApiService] gtm_auth_token saved to localStorage successfully.');
+      } else {
+        console.warn('[ApiService] Failed to extract gtm_auth_token from response payload.');
       }
+
       if (user) {
         localStorage.setItem('gtm_auth_user', JSON.stringify(user));
+        console.log('[ApiService] gtm_auth_user saved to localStorage successfully:', user.username);
+      } else {
+        console.warn('[ApiService] Failed to extract gtm_auth_user from response payload.');
       }
 
       return { token, user, data: { token, user } };
@@ -254,4 +264,4 @@
   };
 
   window.ApiService = ApiService;
-})(window);
+})(typeof window !== 'undefined' ? window : this);

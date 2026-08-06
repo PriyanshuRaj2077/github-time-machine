@@ -175,20 +175,26 @@
       const code = urlParams.get('code');
 
       if (code) {
+        console.log('[App] Detected OAuth authorization code in URL parameter:', code.substring(0, 8) + '...');
         // Clean URL to prevent re-submitting code on refresh
         window.history.replaceState({}, document.title, window.location.pathname);
         try {
           if (window.ApiService) {
+            console.log('[App] Invoking ApiService.handleOAuthCallback(code)...');
             const authRes = await window.ApiService.handleOAuthCallback(code);
             const user = authRes ? (authRes.user || (authRes.data && authRes.data.user)) : null;
             if (user && user.username) {
+              console.log('[App] OAuth user authenticated successfully:', user.username, 'Role:', user.role);
               this.updateAuthUI(user);
             } else {
+              console.warn('[App] User profile was null or missing username after OAuth callback.');
               this.updateAuthUI(null);
             }
+          } else {
+            console.error('[App] window.ApiService is undefined during checkAuthAndCallback!');
           }
         } catch (err) {
-          console.error('[OAuth Callback Error]', err);
+          console.error('[App] OAuth Callback Exception:', err);
           this.updateAuthUI(null);
         }
       } else {
