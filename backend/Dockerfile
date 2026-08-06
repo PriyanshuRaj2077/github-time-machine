@@ -27,8 +27,7 @@ COPY --from=builder /app/target/github-time-machine-backend-1.0.0-SNAPSHOT.jar a
 
 EXPOSE 10000
 
-ENV PORT=10000
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
+ENV JAVA_OPTS="-Xms128m -Xmx384m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 

@@ -63,11 +63,11 @@
         clearTimeout(timeoutId);
 
         if (response.status === 429) {
-          return this._getFallbackData(endpoint, 'RATE_LIMITED');
+          throw new Error('Backend API rate limit exceeded. Please wait a moment.');
         }
 
         if (!response.ok) {
-          return this._getFallbackData(endpoint, 'HTTP_ERROR');
+          throw new Error(`Backend HTTP Error (${response.status})`);
         }
 
         const data = await response.json();
@@ -84,7 +84,7 @@
         return payload;
       } catch (err) {
         clearTimeout(timeoutId);
-        return this._getFallbackData(endpoint, 'OFFLINE');
+        throw new Error(err.message || 'Unable to connect to backend server');
       }
     },
 
@@ -97,7 +97,7 @@
     },
 
     async getProfile(username) {
-      if (!username) return this._getFallbackData('/api/profile/developer', 'EMPTY');
+      if (!username) throw new Error('Username is required');
       return await this._request(`/api/profile/${encodeURIComponent(username.trim())}`);
     },
 
@@ -152,19 +152,8 @@
         }
       }
 
-      if (token) {
-        localStorage.setItem('gtm_auth_token', token);
-        console.log('[ApiService] gtm_auth_token saved to localStorage successfully.');
-      } else {
-        console.warn('[ApiService] Failed to extract gtm_auth_token from response payload.');
-      }
-
-      if (user) {
-        localStorage.setItem('gtm_auth_user', JSON.stringify(user));
-        console.log('[ApiService] gtm_auth_user saved to localStorage successfully:', user.username);
-      } else {
-        console.warn('[ApiService] Failed to extract gtm_auth_user from response payload.');
-      }
+      if (token) localStorage.setItem('gtm_auth_token', token);
+      if (user) localStorage.setItem('gtm_auth_user', JSON.stringify(user));
 
       return { token, user, data: { token, user } };
     },
@@ -212,58 +201,6 @@
       localStorage.removeItem('gtm_auth_token');
       localStorage.removeItem('gtm_auth_user');
       window.location.href = window.location.pathname;
-    },
-
-    async _getFallbackData(endpoint, errorReason = 'GENERAL') {
-      const parts = endpoint.split('/');
-      const action = parts[2] || 'analyze';
-      const target = decodeURIComponent(parts[3] || 'developer');
-
-      const isRepo = target.includes('/') || target.includes('github.com');
-
-      if (action === 'analyze' || action === 'profile') {
-        if (isRepo) {
-          const repoName = target.split('/').slice(-1)[0] || 'react';
-          const ownerName = target.split('/').slice(-2)[0] || 'facebook';
-          return {
-            type: 'repository',
-            name: repoName,
-            owner: ownerName,
-            stars: 224150,
-            forks: 45200,
-            language: 'JavaScript / TypeScript',
-            age: '11 Years',
-            architectureScore: 96,
-            repositoryHealth: 'EXCELLENT (98%)',
-            contributionDifficulty: 'MODERATE',
-            aiSummary: 'High-velocity reactive UI library architecture with active global contributor base.',
-            errorReason
-          };
-        }
-
-        return {
-          username: target,
-          name: target,
-          yearsCoding: 4,
-          monthsCoding: 7,
-          daysCoding: 18,
-          publicRepos: 32,
-          followers: 420,
-          errorReason
-        };
-      }
-
-      if (action === 'replay' || action === 'timeline') {
-        return [
-          { date: 'January 2021', text: 'Created first repository on GitHub.' },
-          { date: 'June 2021', text: 'Pushed 50th commit and mastered Git workflows.' },
-          { date: 'March 2023', text: 'Architected first full-stack application.' },
-          { date: 'August 2025', text: 'Contributed to open source systems.' },
-          { date: 'Today', text: 'You\'re still building. The story continues.' }
-        ];
-      }
-
-      return { success: true, target, errorReason, timestamp: Date.now() };
     }
   };
 

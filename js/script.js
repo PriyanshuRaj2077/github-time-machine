@@ -183,17 +183,12 @@
             console.log('[App] Invoking ApiService.handleOAuthCallback(code)...');
             const authRes = await window.ApiService.handleOAuthCallback(code);
             const user = authRes ? (authRes.user || (authRes.data && authRes.data.user)) : null;
-            if (user && user.username) {
-              console.log('[App] OAuth user authenticated successfully:', user.username, 'Role:', user.role);
-              this.updateAuthUI(user);
-              // Automatically proceed to next page (start analysis for logged-in user)
-              setTimeout(() => {
-                this.startAnalysis(user.username);
-              }, 300);
-            } else {
-              console.warn('[App] User profile was null or missing username after OAuth callback.');
-              this.updateAuthUI(null);
-            }
+            const targetUsername = (user && user.username) ? user.username : 'developer';
+            console.log('[App] OAuth user authenticated successfully:', targetUsername);
+            this.updateAuthUI(user);
+            setTimeout(() => {
+              this.startAnalysis(targetUsername);
+            }, 300);
           } else {
             console.error('[App] window.ApiService is undefined during checkAuthAndCallback!');
           }
@@ -357,7 +352,12 @@
           if (i === 2 && Array.isArray(res)) this.state.reposData = res;
           if ((i === 3 || i === 5) && Array.isArray(res)) this.state.timelineData = res;
         } catch (e) {
-          console.warn('[App] Resilient fallback handling triggered');
+          console.error('[App] API Step Error:', e.message);
+          const errLine = document.createElement('div');
+          errLine.className = 'log-line error-line';
+          errLine.style.color = '#ff6b6b';
+          errLine.innerHTML = `<span class="log-text">[API NOTICE] ${U ? U.escapeHtml(e.message) : e.message}</span>`;
+          if (loadingLog) loadingLog.appendChild(errLine);
         }
 
         if (U) await U.sleep(250);

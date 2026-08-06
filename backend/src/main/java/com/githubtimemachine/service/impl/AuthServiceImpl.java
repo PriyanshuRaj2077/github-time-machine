@@ -62,9 +62,13 @@ public class AuthServiceImpl implements AuthService {
         } else {
             logger.info("[AuthService] Generated OAuth URL for clientId length: {}", clientId.length());
         }
-        return "https://github.com/login/oauth/authorize" +
-                "?client_id=" + (clientId != null ? clientId.trim() : "") +
-                "&scope=read:user,user:email";
+        StringBuilder sb = new StringBuilder("https://github.com/login/oauth/authorize");
+        sb.append("?client_id=").append(clientId != null ? clientId.trim() : "");
+        if (redirectUri != null && !redirectUri.isBlank()) {
+            sb.append("&redirect_uri=").append(redirectUri.trim());
+        }
+        sb.append("&scope=read:user,user:email");
+        return sb.toString();
     }
 
     @Override
