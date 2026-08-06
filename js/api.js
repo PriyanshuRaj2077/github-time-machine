@@ -9,7 +9,7 @@
   const API_BASE =
     window.location.hostname === 'localhost'
       ? 'http://localhost:8080'
-      : 'https://github-time-machine-7s7f1.onrender.com';
+      : 'https://github-time-machine-7s7f.onrender.com';
   const DEFAULT_TIMEOUT_MS = 10000;
   const CACHE_TTL_MS = 300000; // 5-minute client-side memory cache TTL
 
