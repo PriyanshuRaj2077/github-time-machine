@@ -39,6 +39,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     private final AnalyticsProcessor analyticsProcessor;
     private final GitHubService gitHubService;
     private final EntityDtoMapper entityDtoMapper;
+    private final com.githubtimemachine.repository.AnalysisHistoryRepository analysisHistoryRepository;
 
     // Strict Constructor Injection ONLY (No @Autowired on fields)
     public AnalysisServiceImpl(
@@ -47,13 +48,15 @@ public class AnalysisServiceImpl implements AnalysisService {
             AnalyticsSnapshotRepository analyticsSnapshotRepository,
             AnalyticsProcessor analyticsProcessor,
             GitHubService gitHubService,
-            EntityDtoMapper entityDtoMapper) {
+            EntityDtoMapper entityDtoMapper,
+            com.githubtimemachine.repository.AnalysisHistoryRepository analysisHistoryRepository) {
         this.userRepository = userRepository;
         this.repositorySnapshotRepository = repositorySnapshotRepository;
         this.analyticsSnapshotRepository = analyticsSnapshotRepository;
         this.analyticsProcessor = analyticsProcessor;
         this.gitHubService = gitHubService;
         this.entityDtoMapper = entityDtoMapper;
+        this.analysisHistoryRepository = analysisHistoryRepository;
     }
 
     @Override
@@ -82,10 +85,23 @@ public class AnalysisServiceImpl implements AnalysisService {
 
         try {
             AnalyzedUser savedUser = userRepository.save(user);
+            recordAnalysisHistoryIfAuthenticated(target, target.contains("/") ? "REPOSITORY" : "USER_PROFILE");
             return entityDtoMapper.toUserResponseDto(savedUser);
         } catch (Exception e) {
             log.warn("[AnalysisServiceImpl] Database write failed. Returning resilient in-memory result.", e);
+            recordAnalysisHistoryIfAuthenticated(target, target.contains("/") ? "REPOSITORY" : "USER_PROFILE");
             return entityDtoMapper.toUserResponseDto(user);
+        }
+    }
+
+    private void recordAnalysisHistoryIfAuthenticated(String target, String type) {
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.githubtimemachine.security.UserPrincipal principal) {
+                analysisHistoryRepository.save(new com.githubtimemachine.entity.AnalysisHistory(principal.getId(), target, type));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to record analysis history: {}", e.getMessage());
         }
     }
 

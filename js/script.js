@@ -30,6 +30,7 @@
       }
 
       this.bindEvents();
+      this.checkAuthAndCallback();
     },
 
     cacheDOM() {
@@ -57,6 +58,19 @@
         replayProgressText: U.$('#replay-progress-text'),
         replayDots: U.$('#replay-dots'),
         headerUserTag: U.$('#header-user-tag'),
+        userProfileBadge: U.$('#user-profile-badge'),
+        headerUserAvatar: U.$('#header-user-avatar'),
+        headerUserName: U.$('#header-user-name'),
+        btnSavedAnalyses: U.$('#btn-saved-analyses'),
+        btnLogout: U.$('#btn-logout'),
+        btnAdminDashboard: U.$('#btn-admin-dashboard'),
+        adminModal: U.$('#admin-modal'),
+        btnCloseAdmin: U.$('#btn-close-admin'),
+        adminTabs: U.$$('.admin-tab'),
+        adminTabContents: U.$$('.admin-tab-content'),
+        historyModal: U.$('#history-modal'),
+        historyList: U.$('#history-list'),
+        btnCloseHistory: U.$('#btn-close-history'),
         summaryYears: U.$('#summary-years'),
         summaryRepos: U.$('#summary-repos'),
         summaryFollowers: U.$('#summary-followers'),
@@ -120,6 +134,124 @@
 
       if (this.elements.btnBackDashboardList) {
         this.elements.btnBackDashboardList.forEach(btn => btn.addEventListener('click', () => this.showDashboard()));
+      }
+
+      if (this.elements.btnLogout) {
+        this.elements.btnLogout.addEventListener('click', () => {
+          if (window.ApiService) window.ApiService.logout();
+        });
+      }
+
+      if (this.elements.btnSavedAnalyses) {
+        this.elements.btnSavedAnalyses.addEventListener('click', () => this.showHistoryModal());
+      }
+
+      if (this.elements.btnCloseHistory) {
+        this.elements.btnCloseHistory.addEventListener('click', () => this.closeHistoryModal());
+      }
+
+      if (this.elements.btnAdminDashboard) {
+        this.elements.btnAdminDashboard.addEventListener('click', () => this.showAdminModal());
+      }
+
+      if (this.elements.btnCloseAdmin) {
+        this.elements.btnCloseAdmin.addEventListener('click', () => this.closeAdminModal());
+      }
+
+      if (this.elements.adminTabs) {
+        this.elements.adminTabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            this.switchAdminTab(targetTab);
+          });
+        });
+      }
+    },
+
+    async checkAuthAndCallback() {
+      // 1. Check if OAuth code is in URL search params
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (code) {
+        // Clean URL to prevent re-submitting code on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+        try {
+          if (window.ApiService) {
+            const authRes = await window.ApiService.handleOAuthCallback(code);
+            if (authRes && authRes.user) {
+              this.updateAuthUI(authRes.user);
+            }
+          }
+        } catch (err) {
+          console.error('[OAuth Callback Error]', err);
+        }
+      } else {
+        // 2. Check cached user or fetch /api/auth/me
+        const token = localStorage.getItem('gtm_auth_token');
+        if (token && window.ApiService) {
+          try {
+            const user = await window.ApiService.getCurrentUser();
+            if (user && user.username) {
+              this.updateAuthUI(user);
+            }
+          } catch (err) {
+            console.warn('[Auth Check Error] Session expired or offline');
+          }
+        }
+      }
+    },
+
+    updateAuthUI(user) {
+      if (!user) return;
+      if (this.elements.userProfileBadge) {
+        this.elements.userProfileBadge.classList.remove('hidden');
+      }
+      if (this.elements.headerUserTag) {
+        this.elements.headerUserTag.style.display = 'none';
+      }
+      if (this.elements.headerUserAvatar) {
+        this.elements.headerUserAvatar.src = user.avatarUrl || 'https://github.com/identicons/octocat.png';
+      }
+      if (this.elements.headerUserName) {
+        this.elements.headerUserName.textContent = user.displayName || `@${user.username}`;
+      }
+      if (user.role === 'ROLE_ADMIN' && this.elements.btnAdminDashboard) {
+        this.elements.btnAdminDashboard.classList.remove('hidden');
+      }
+    },
+
+    async showHistoryModal() {
+      if (!this.elements.historyModal || !this.elements.historyList) return;
+
+      this.elements.historyModal.classList.remove('hidden');
+      this.elements.historyList.innerHTML = '<p class="empty-history-text">Loading saved history...</p>';
+
+      try {
+        if (window.ApiService) {
+          const history = await window.ApiService.getUserHistory();
+          if (Array.isArray(history) && history.length > 0) {
+            this.elements.historyList.innerHTML = history.map(item => `
+              <div class="history-item">
+                <div>
+                  <div class="history-item-target">${item.target}</div>
+                  <div class="history-item-date">${new Date(item.createdAt).toLocaleString()}</div>
+                </div>
+                <button type="button" class="history-item-action" onclick="window.App.startAnalysis('${item.target}')">Replay Again</button>
+              </div>
+            `).join('');
+          } else {
+            this.elements.historyList.innerHTML = '<p class="empty-history-text">No saved analyses found.</p>';
+          }
+        }
+      } catch (err) {
+        this.elements.historyList.innerHTML = '<p class="empty-history-text">Failed to load history.</p>';
+      }
+    },
+
+    closeHistoryModal() {
+      if (this.elements.historyModal) {
+        this.elements.historyModal.classList.add('hidden');
       }
     },
 
@@ -450,6 +582,111 @@
       this.navigateTo('wrapped-screen');
       if (this.elements.wrappedUser) {
         this.elements.wrappedUser.textContent = `@${this.state.targetQuery}`;
+      }
+    },
+
+    async showAdminModal() {
+      if (!this.elements.adminModal) return;
+
+      this.elements.adminModal.classList.remove('hidden');
+      this.switchAdminTab('overview');
+
+      try {
+        if (window.ApiService) {
+          const stats = await window.ApiService.getAdminDashboard();
+          if (stats) {
+            const setVal = (id, val) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = val !== undefined ? val : '0';
+            };
+
+            setVal('adm-total-users', stats.totalUsers);
+            setVal('adm-total-logins', stats.totalLogins);
+            setVal('adm-new-users', stats.newUsers24h);
+            setVal('adm-dau', stats.dailyActiveUsers);
+            setVal('adm-total-analyses', stats.totalAnalyses);
+            setVal('adm-user-searches', stats.githubSearches);
+            setVal('adm-repo-searches', stats.repositorySearches);
+            setVal('adm-ai-requests', stats.aiRequests);
+            setVal('adm-api-usage', stats.apiUsageCount);
+            setVal('adm-db-status', stats.databaseStatus || 'Healthy (PostgreSQL / H2)');
+            setVal('adm-uptime', stats.applicationUptime || '0 days, 0 hrs');
+
+            const topUsersList = document.getElementById('adm-top-users-list');
+            if (topUsersList && Array.isArray(stats.mostSearchedUsers)) {
+              topUsersList.innerHTML = stats.mostSearchedUsers.map(u => `
+                <li><span>${u.target}</span> <span class="tag">${u.count} searches</span></li>
+              `).join('');
+            }
+
+            const topReposList = document.getElementById('adm-top-repos-list');
+            if (topReposList && Array.isArray(stats.mostSearchedRepositories)) {
+              topReposList.innerHTML = stats.mostSearchedRepositories.map(r => `
+                <li><span>${r.target}</span> <span class="tag">${r.count} searches</span></li>
+              `).join('');
+            }
+          }
+
+          // Fetch User List
+          const users = await window.ApiService.getAdminUsers();
+          const tbody = document.getElementById('adm-users-tbody');
+          if (tbody && Array.isArray(users)) {
+            tbody.innerHTML = users.map(u => `
+              <tr>
+                <td><img src="${u.avatarUrl || 'https://github.com/identicons/octocat.png'}" class="user-avatar" width="24" height="24"/></td>
+                <td><strong>@${u.username}</strong></td>
+                <td>${u.displayName || '-'}</td>
+                <td>${u.email || '-'}</td>
+                <td><span class="user-role-badge ${u.role === 'ROLE_ADMIN' ? 'admin' : 'user'}">${u.role}</span></td>
+                <td>${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</td>
+              </tr>
+            `).join('');
+          }
+
+          // Fetch System Status
+          const sys = await window.ApiService.getAdminSystem();
+          const sysLogs = document.getElementById('adm-system-logs');
+          if (sysLogs && sys) {
+            sysLogs.textContent = `SYSTEM STATUS: ${sys.status || 'UP'}
+DATABASE: ${sys.database || 'CONNECTED'}
+UPTIME: ${Math.floor((sys.uptimeMs || 0) / 1000)} seconds
+JVM MEMORY FREE: ${Math.floor((sys.jvmMemoryFreeBytes || 0) / (1024 * 1024))} MB
+JVM MEMORY TOTAL: ${Math.floor((sys.jvmMemoryTotalBytes || 0) / (1024 * 1024))} MB
+AVAILABLE PROCESSORS: ${sys.availableProcessors || 4}`;
+          }
+        }
+      } catch (err) {
+        console.error('[Admin Dashboard Error]', err);
+      }
+    },
+
+    closeAdminModal() {
+      if (this.elements.adminModal) {
+        this.elements.adminModal.classList.add('hidden');
+      }
+    },
+
+    switchAdminTab(tabName) {
+      if (this.elements.adminTabs) {
+        this.elements.adminTabs.forEach(t => {
+          if (t.getAttribute('data-tab') === tabName) {
+            t.classList.add('active');
+          } else {
+            t.classList.remove('active');
+          }
+        });
+      }
+
+      if (this.elements.adminTabContents) {
+        this.elements.adminTabContents.forEach(c => {
+          if (c.id === `admin-tab-${tabName}`) {
+            c.classList.remove('hidden');
+            c.classList.add('active');
+          } else {
+            c.classList.add('hidden');
+            c.classList.remove('active');
+          }
+        });
       }
     },
 

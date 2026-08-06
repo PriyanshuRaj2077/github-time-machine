@@ -238,10 +238,17 @@
       }
     },
 
-    handleOAuthLogin() {
-      if (this.elements.usernameInput) {
-        this.elements.usernameInput.value = 'octocat';
-        this.handleExecute();
+    async handleOAuthLogin() {
+      try {
+        const res = await window.ApiService.getAuthUrl();
+        if (res && res.url) {
+          window.location.href = res.url;
+        } else {
+          // Fallback to standard authorization endpoint
+          window.location.href = 'https://github.com/login/oauth/authorize';
+        }
+      } catch (err) {
+        console.error('Failed to initiate OAuth login:', err);
       }
     }
   };

@@ -17,13 +17,14 @@
 
   const ApiService = {
     /**
-     * Optimized request wrapper with Client Caching & AbortController timeout
+     * Optimized request wrapper with Client Caching, Auth headers & AbortController timeout
      */
-    async _request(endpoint) {
+    async _request(endpoint, options = {}) {
+      const method = options.method || 'GET';
       const now = Date.now();
 
-      // Performance Optimization: Check in-memory client cache first
-      if (requestCache.has(endpoint)) {
+      // Performance Optimization: Check in-memory client cache first for GET requests
+      if (method === 'GET' && requestCache.has(endpoint)) {
         const cached = requestCache.get(endpoint);
         if (now - cached.timestamp < CACHE_TTL_MS) {
           return cached.data;
@@ -35,15 +36,28 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      };
+
+      const token = localStorage.getItem('gtm_auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       try {
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
+        const fetchOptions = {
+          method,
+          headers,
           signal: controller.signal
-        });
+        };
+
+        if (options.body) {
+          fetchOptions.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
 
         clearTimeout(timeoutId);
 
@@ -58,11 +72,13 @@
         const data = await response.json();
         const payload = (data && data.data !== undefined) ? data.data : data;
 
-        // Cache successful response
-        requestCache.set(endpoint, {
-          timestamp: now,
-          data: payload
-        });
+        // Cache successful GET response
+        if (method === 'GET') {
+          requestCache.set(endpoint, {
+            timestamp: now,
+            data: payload
+          });
+        }
 
         return payload;
       } catch (err) {
@@ -103,6 +119,54 @@
 
     async getInsights(username) {
       return await this._request(`/api/insights/${encodeURIComponent((username || 'developer').trim())}`);
+    },
+
+    async getAuthUrl() {
+      return await this._request('/api/auth/github/url');
+    },
+
+    async handleOAuthCallback(code) {
+      const res = await this._request('/api/auth/github/callback', {
+        method: 'POST',
+        body: { code }
+      });
+      if (res && res.token) {
+        localStorage.setItem('gtm_auth_token', res.token);
+        if (res.user) {
+          localStorage.setItem('gtm_auth_user', JSON.stringify(res.user));
+        }
+      }
+      return res;
+    },
+
+    async getCurrentUser() {
+      return await this._request('/api/auth/me');
+    },
+
+    async getUserHistory() {
+      return await this._request('/api/user/history');
+    },
+
+    async getAdminDashboard() {
+      return await this._request('/api/admin/dashboard');
+    },
+
+    async getAdminUsers() {
+      return await this._request('/api/admin/users');
+    },
+
+    async getAdminAnalytics() {
+      return await this._request('/api/admin/analytics');
+    },
+
+    async getAdminSystem() {
+      return await this._request('/api/admin/system');
+    },
+
+    logout() {
+      localStorage.removeItem('gtm_auth_token');
+      localStorage.removeItem('gtm_auth_user');
+      window.location.href = window.location.pathname;
     },
 
     async _getFallbackData(endpoint, errorReason = 'GENERAL') {

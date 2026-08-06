@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface AnalyzedUserRepository extends JpaRepository<AnalyzedUser, UUID> {
 
-    @EntityGraph(attributePaths = {"repositorySnapshots", "analyticsSnapshot"})
+    @EntityGraph(attributePaths = {"repositories", "analyticsSnapshot"})
     Optional<AnalyzedUser> findByUsername(String username);
 
     boolean existsByUsername(String username);

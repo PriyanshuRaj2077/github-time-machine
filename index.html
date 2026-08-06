@@ -211,6 +211,13 @@
           <span class="accent-text" aria-hidden="true">❯_</span> GITHUB TIME MACHINE
         </div>
         <div class="header-user-info">
+          <div id="user-profile-badge" class="user-profile-badge hidden">
+            <img id="header-user-avatar" class="user-avatar" src="" alt="User Avatar" />
+            <span id="header-user-name" class="user-name">@developer</span>
+            <button type="button" id="btn-admin-dashboard" class="header-btn admin-btn hidden" aria-label="Open Admin Dashboard">⚙ ADMIN DASHBOARD</button>
+            <button type="button" id="btn-saved-analyses" class="header-btn secondary" aria-label="View saved analyses">SAVED ANALYSES</button>
+            <button type="button" id="btn-logout" class="header-btn danger" aria-label="Logout">LOGOUT</button>
+          </div>
           <span id="header-user-tag">@username</span>
           <button type="button" id="btn-new-search" class="header-btn" aria-label="Start new search">NEW TIME TRAVEL</button>
         </div>
@@ -434,8 +441,139 @@
           </div>
         </div>
 
+    <!-- ========================================== -->
+    <!-- SECTION 7: SAVED ANALYSES MODAL           -->
+    <!-- ========================================== -->
+    <div id="history-modal" class="history-modal hidden" role="dialog" aria-label="Saved Analyses History">
+      <div class="history-modal-content">
+        <div class="history-modal-header">
+          <h2>SAVED TIME TRAVEL ANALYSES</h2>
+          <button type="button" id="btn-close-history" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="empty-history-text">No saved analyses found.</p>
+        </div>
       </div>
-    </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 8: ADMIN DASHBOARD MODAL          -->
+    <!-- ========================================== -->
+    <div id="admin-modal" class="history-modal hidden" role="dialog" aria-label="Admin Control Center">
+      <div class="history-modal-content admin-modal-content">
+        <div class="history-modal-header admin-modal-header">
+          <div class="admin-header-title">
+            <span class="admin-badge">ROLE_ADMIN</span>
+            <h2>SYSTEM & METRICS CONTROL CENTER</h2>
+          </div>
+          <button type="button" id="btn-close-admin" class="modal-close-btn">&times;</button>
+        </div>
+
+        <!-- Admin Tab Navigation -->
+        <div class="admin-tabs" role="tablist">
+          <button type="button" class="admin-tab active" data-tab="overview">Overview & Metrics</button>
+          <button type="button" class="admin-tab" data-tab="users">Registered Users</button>
+          <button type="button" class="admin-tab" data-tab="system">Database & System</button>
+        </div>
+
+        <!-- Tab 1: Overview & Metrics -->
+        <div id="admin-tab-overview" class="admin-tab-content active">
+          <div class="admin-metrics-grid">
+            <div class="admin-metric-card">
+              <span class="m-label">TOTAL USERS</span>
+              <span id="adm-total-users" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">TOTAL LOGINS</span>
+              <span id="adm-total-logins" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">NEW USERS (24H)</span>
+              <span id="adm-new-users" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">DAILY ACTIVE USERS (DAU)</span>
+              <span id="adm-dau" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">TOTAL ANALYSES</span>
+              <span id="adm-total-analyses" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">GITHUB SEARCHES</span>
+              <span id="adm-user-searches" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">REPO SEARCHES</span>
+              <span id="adm-repo-searches" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">AI REQUESTS</span>
+              <span id="adm-ai-requests" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card">
+              <span class="m-label">API USAGE</span>
+              <span id="adm-api-usage" class="m-val">0</span>
+            </div>
+            <div class="admin-metric-card full">
+              <span class="m-label">DATABASE STATUS</span>
+              <span id="adm-db-status" class="m-val highlight">Healthy (PostgreSQL / H2)</span>
+            </div>
+            <div class="admin-metric-card full">
+              <span class="m-label">APPLICATION UPTIME</span>
+              <span id="adm-uptime" class="m-val highlight">0 days, 0 hrs, 0 mins</span>
+            </div>
+          </div>
+
+          <div class="admin-top-searched-grid">
+            <div class="top-list-box">
+              <h3>MOST SEARCHED USERS</h3>
+              <ul id="adm-top-users-list" class="top-list">
+                <li><span>torvalds</span> <span class="tag">15 searches</span></li>
+              </ul>
+            </div>
+            <div class="top-list-box">
+              <h3>MOST SEARCHED REPOSITORIES</h3>
+              <ul id="adm-top-repos-list" class="top-list">
+                <li><span>facebook/react</span> <span class="tag">24 searches</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Registered Users -->
+        <div id="admin-tab-users" class="admin-tab-content hidden">
+          <div class="table-wrapper">
+            <table class="admin-users-table">
+              <thead>
+                <tr>
+                  <th>AVATAR</th>
+                  <th>USERNAME</th>
+                  <th>DISPLAY NAME</th>
+                  <th>EMAIL</th>
+                  <th>ROLE</th>
+                  <th>LAST LOGIN</th>
+                </tr>
+              </thead>
+              <tbody id="adm-users-tbody">
+                <tr>
+                  <td colspan="6" class="text-center">Loading registered users...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Database & System -->
+        <div id="admin-tab-system" class="admin-tab-content hidden">
+          <div class="system-logs-box">
+            <h3>RECENT SYSTEM STATUS & LOGS</h3>
+            <pre id="adm-system-logs" class="system-logs-pre">System operating normally.</pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
   </div><!-- /#app -->
 
