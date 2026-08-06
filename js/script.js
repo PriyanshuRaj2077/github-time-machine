@@ -138,6 +138,7 @@
 
       if (this.elements.btnLogout) {
         this.elements.btnLogout.addEventListener('click', () => {
+          this.updateAuthUI(null);
           if (window.ApiService) window.ApiService.logout();
         });
       }
@@ -206,6 +207,12 @@
       if (!user) {
         if (this.elements.btnAdminDashboard) {
           this.elements.btnAdminDashboard.classList.add('hidden');
+        }
+        if (this.elements.userProfileBadge) {
+          this.elements.userProfileBadge.classList.add('hidden');
+        }
+        if (this.elements.headerUserTag) {
+          this.elements.headerUserTag.style.display = 'block';
         }
         return;
       }
