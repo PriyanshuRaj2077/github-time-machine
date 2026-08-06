@@ -186,6 +186,10 @@
             if (user && user.username) {
               console.log('[App] OAuth user authenticated successfully:', user.username, 'Role:', user.role);
               this.updateAuthUI(user);
+              // Automatically proceed to next page (start analysis for logged-in user)
+              setTimeout(() => {
+                this.startAnalysis(user.username);
+              }, 300);
             } else {
               console.warn('[App] User profile was null or missing username after OAuth callback.');
               this.updateAuthUI(null);
