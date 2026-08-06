@@ -127,7 +127,7 @@
     },
 
     async handleOAuthCallback(code) {
-      const res = await this._request('/api/auth/github/callback', {
+      const response = await this._request('/api/auth/github/callback', {
         method: 'POST',
         body: { code }
       });
@@ -135,13 +135,13 @@
       let token = null;
       let user = null;
 
-      if (res) {
-        if (res.token) {
-          token = res.token;
-          user = res.user;
-        } else if (res.data && res.data.token) {
-          token = res.data.token;
-          user = res.data.user;
+      if (response) {
+        if (response.data && response.data.token) {
+          token = response.data.token;
+          user = response.data.user;
+        } else if (response.token) {
+          token = response.token;
+          user = response.user;
         }
       }
 
@@ -152,7 +152,7 @@
         localStorage.setItem('gtm_auth_user', JSON.stringify(user));
       }
 
-      return { token, user, raw: res };
+      return { token, user, data: { token, user } };
     },
 
     async getCurrentUser() {

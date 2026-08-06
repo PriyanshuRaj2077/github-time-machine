@@ -180,7 +180,7 @@
         try {
           if (window.ApiService) {
             const authRes = await window.ApiService.handleOAuthCallback(code);
-            const user = authRes ? (authRes.user || (authRes.raw && authRes.raw.data && authRes.raw.data.user)) : null;
+            const user = authRes ? (authRes.user || (authRes.data && authRes.data.user)) : null;
             if (user && user.username) {
               this.updateAuthUI(user);
             } else {
