@@ -38,9 +38,19 @@ public class AuthController {
     }
 
     @PostMapping("/github/callback")
-    public ResponseEntity<ApiResponse<AuthResponseDto>> handleGitHubCallback(@Valid @RequestBody OAuthCodeRequestDto request) {
-        logger.info("[AuthController] Received POST OAuth callback with code length: {}", request.getCode() != null ? request.getCode().length() : 0);
-        AuthResponseDto response = authService.processGitHubCallback(request.getCode());
+    public ResponseEntity<ApiResponse<AuthResponseDto>> handleGitHubCallback(
+            @RequestParam(value = "code", required = false) String queryCode,
+            @RequestBody(required = false) OAuthCodeRequestDto request) {
+        String code = (request != null && request.getCode() != null && !request.getCode().isBlank())
+                ? request.getCode()
+                : queryCode;
+
+        if (code == null || code.isBlank()) {
+            throw new com.githubtimemachine.exception.BadRequestException("OAuth authorization code is required");
+        }
+
+        logger.info("[AuthController] Received POST OAuth callback with code length: {}", code.length());
+        AuthResponseDto response = authService.processGitHubCallback(code);
         logger.info("[AuthController] OAuth authentication successful for user: {}", response.getUser() != null ? response.getUser().getUsername() : "unknown");
         return ResponseEntity.ok(ApiResponse.success(response, "Authentication successful"));
     }

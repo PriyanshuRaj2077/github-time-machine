@@ -240,15 +240,21 @@
 
     async handleOAuthLogin() {
       try {
-        const res = await window.ApiService.getAuthUrl();
-        if (res && res.url) {
-          window.location.href = res.url;
+        console.log('[HomeModule] Requesting OAuth URL from ApiService...');
+        const authUrlRes = await window.ApiService.getAuthUrl();
+        const url = typeof authUrlRes === 'string'
+          ? authUrlRes
+          : (authUrlRes ? (authUrlRes.url || (authUrlRes.data && authUrlRes.data.url)) : null);
+
+        console.log('[HomeModule] Final OAuth Redirect URL:', url);
+
+        if (url) {
+          window.location.href = url;
         } else {
-          // Fallback to standard authorization endpoint
-          window.location.href = 'https://github.com/login/oauth/authorize';
+          console.error('[HomeModule] Failed to retrieve valid OAuth URL from backend.');
         }
       } catch (err) {
-        console.error('Failed to initiate OAuth login:', err);
+        console.error('[HomeModule] Exception while initiating OAuth login:', err);
       }
     }
   };

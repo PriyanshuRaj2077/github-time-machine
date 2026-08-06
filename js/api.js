@@ -123,14 +123,18 @@
     },
 
     async getAuthUrl() {
-      return await this._request('/api/auth/github/url');
+      const res = await this._request('/api/auth/github/url');
+      const url = (res && typeof res === 'object') ? (res.url || (res.data && res.data.url)) : res;
+      console.log('[ApiService] Retrieved GitHub Auth URL:', url);
+      return url;
     },
 
     async handleOAuthCallback(code) {
       console.log('[ApiService] Initiating OAuth code exchange with backend. Code:', code ? code.substring(0, 8) + '...' : 'null');
+
       const response = await this._request('/api/auth/github/callback', {
         method: 'POST',
-        body: { code }
+        body: { code: (code || '').trim() }
       });
 
       console.log('[ApiService] Backend OAuth exchange raw response:', response);

@@ -37,13 +37,13 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final RestTemplate restTemplate;
 
-    @Value("${github.oauth.client-id:}")
+    @Value("${github.oauth.client-id:${GITHUB_CLIENT_ID:${GITHUB_OAUTH_CLIENT_ID:}}}")
     private String clientId;
 
-    @Value("${github.oauth.client-secret:}")
+    @Value("${github.oauth.client-secret:${GITHUB_CLIENT_SECRET:${GITHUB_OAUTH_CLIENT_SECRET:}}}")
     private String clientSecret;
 
-    @Value("${github.oauth.redirect-uri:http://localhost:8080}")
+    @Value("${github.oauth.redirect-uri:${GITHUB_OAUTH_REDIRECT_URI:${GITHUB_REDIRECT_URI:http://localhost:8080}}}")
     private String redirectUri;
 
     @Value("${admin.usernames:admin,PriyanshuRaj2077}")
@@ -57,8 +57,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String getGitHubAuthorizationUrl() {
+        if (clientId == null || clientId.isBlank()) {
+            logger.warn("[AuthService] GitHub clientId is empty or unconfigured. Ensure GITHUB_CLIENT_ID environment variable is set in Render.");
+        } else {
+            logger.info("[AuthService] Generated OAuth URL for clientId length: {}", clientId.length());
+        }
         return "https://github.com/login/oauth/authorize" +
-                "?client_id=" + clientId +
+                "?client_id=" + (clientId != null ? clientId.trim() : "") +
                 "&scope=read:user,user:email";
     }
 
